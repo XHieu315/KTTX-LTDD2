@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Dimensions, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import MapView, { Marker } from 'react-native-maps';
 import HorizontalEventCard from './HorizontalEventCard';
+
+let MapView, Marker;
+if (Platform.OS !== 'web') {
+  const Maps = require('react-native-maps');
+  MapView = Maps.default;
+  Marker = Maps.Marker;
+}
 
 const { width } = Dimensions.get('window');
 
@@ -35,27 +41,35 @@ export default function MapScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Real Map */}
-      <MapView
-        style={styles.map}
-        initialRegion={initialRegion}
-        showsUserLocation
-        showsMyLocationButton={false}
-      >
-        {markers.map(marker => (
-          <Marker
-            key={marker.id}
-            coordinate={{ latitude: marker.latitude, longitude: marker.longitude }}
-          >
-            <View style={styles.markerContainer}>
-              <View style={[styles.markerBubble, { backgroundColor: marker.color }]}>
-                <MaterialCommunityIcons name={marker.icon} size={14} color="#FFFFFF" />
+      {/* Map Section */}
+      {Platform.OS !== 'web' && MapView ? (
+        <MapView
+          style={styles.map}
+          initialRegion={initialRegion}
+          showsUserLocation
+          showsMyLocationButton={false}
+        >
+          {markers.map(marker => (
+            <Marker
+              key={marker.id}
+              coordinate={{ latitude: marker.latitude, longitude: marker.longitude }}
+            >
+              <View style={styles.markerContainer}>
+                <View style={[styles.markerBubble, { backgroundColor: marker.color }]}>
+                  <MaterialCommunityIcons name={marker.icon} size={14} color="#FFFFFF" />
+                </View>
+                <View style={[styles.markerArrow, { borderTopColor: marker.color }]} />
               </View>
-              <View style={[styles.markerArrow, { borderTopColor: marker.color }]} />
-            </View>
-          </Marker>
-        ))}
-      </MapView>
+            </Marker>
+          ))}
+        </MapView>
+      ) : (
+        <View style={[styles.map, styles.webMapPlaceholder]}>
+          <Ionicons name="map-outline" size={64} color="#5669FF" />
+          <Text style={styles.webMapText}>Bản đồ xem trực quan trên Web</Text>
+          <Text style={styles.webMapSubText}>(Để xem đầy đủ tương tác Google Maps, hãy chạy trên Android/iOS)</Text>
+        </View>
+      )}
 
       {/* Top Gradient */}
       <LinearGradient
@@ -158,6 +172,24 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: width,
     height: screenHeight,
+  },
+  webMapPlaceholder: {
+    backgroundColor: '#E8ECF4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  webMapText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#120D26',
+    marginTop: 12,
+  },
+  webMapSubText: {
+    fontSize: 13,
+    color: '#747688',
+    marginTop: 6,
+    textAlign: 'center',
   },
   topGradient: {
     position: 'absolute',
